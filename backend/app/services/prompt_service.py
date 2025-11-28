@@ -5,7 +5,7 @@ import json
 
 class WritingStyleManager:
     """写作风格管理器"""
-    
+
     # 预设风格配置
     PRESET_STYLES = {
         "natural": {
@@ -81,17 +81,17 @@ class WritingStyleManager:
 """
         }
     }
-    
+
     @classmethod
     def get_preset_style(cls, preset_id: str) -> Optional[Dict[str, str]]:
         """获取预设风格配置"""
         return cls.PRESET_STYLES.get(preset_id)
-    
+
     @classmethod
     def get_all_presets(cls) -> Dict[str, Dict[str, str]]:
         """获取所有预设风格"""
         return cls.PRESET_STYLES
-    
+
     @staticmethod
     def apply_style_to_prompt(base_prompt: str, style_content: str) -> str:
         """
@@ -110,7 +110,7 @@ class WritingStyleManager:
 
 class PromptService:
     """提示词模板管理"""
-    
+
     # 世界构建提示词
     WORLD_BUILDING = """你是一位资深的世界观设计师。基于以下输入信息，构建一个高度原创、深度自洽、充满戏剧冲突的小说世界观。
 
@@ -394,7 +394,7 @@ class PromptService:
 1. 只返回纯JSON数组，不要有```json```这样的标记
 2. 数组中要包含{chapter_count}个章节对象
 3. 所有内容描述中严禁使用任何特殊符号"""
-    
+
     # 大纲续写提示词（记忆增强版）
     OUTLINE_CONTINUE_GENERATION = """你是一位经验丰富的小说作家和编剧。请基于以下信息续写小说大纲：
 
@@ -477,7 +477,7 @@ class PromptService:
 3. 每个summary必须是100-200字的详细描述
 4. 确保字段结构与已有章节完全一致
 5. 所有内容描述中严禁使用任何特殊符号"""
-    
+
     # AI去味提示词（核心特色功能）
     AI_DENOISING = """你是一位追求自然写作风格的编辑。你的任务是将AI生成的文本改写得更像人类作家的手笔。
 
@@ -539,12 +539,13 @@ class PromptService:
 {outlines_context}
 
 本章信息：
+- 当前第{outline_number}卷《{outline_title}》
 - 章节序号：第{chapter_number}章
 - 章节标题：{chapter_title}
-- 章节大纲：{chapter_outline}
+- 情节概要：{chapter_summary}
 
 创作要求：
-1. 严格按照大纲内容展开情节
+1. 严格按照大纲内容展开情节，根据情节概要扩写内容
 2. 保持与前后章节的连贯性
 3. 符合角色性格设定
 4. 体现世界观特色
@@ -584,9 +585,10 @@ class PromptService:
 {memory_context}
 
 本章信息：
+- 当前第{outline_number}卷《{outline_title}》
 - 章节序号：第{chapter_number}章
 - 章节标题：{chapter_title}
-- 章节大纲：{chapter_outline}
+- 情节概要：{chapter_summary}
 
 创作要求：
 1. **剧情连贯性（最重要）**：
@@ -596,7 +598,7 @@ class PromptService:
 - 自然过渡，避免突兀的跳跃
 
 2. **情节推进**：
-- 严格按照本章大纲展开情节
+- 严格按照大纲内容展开情节，根据情节概要扩写内容
 - 推动故事向前发展
 - 保持与全书大纲的一致性
 
@@ -849,7 +851,7 @@ class PromptService:
 1. 只返回纯JSON对象，不要有```json```这样的标记
 2. 所有内容描述中严禁使用任何特殊符号
 3. 不要有任何额外的文字说明"""
-    
+
     # 大纲展开为多章节的提示词
     OUTLINE_EXPANSION = """你是专业的小说情节架构师。请分析以下大纲节点，将其展开为 {target_chapters} 个章节的详细规划。
 
@@ -941,7 +943,7 @@ class PromptService:
             return template.format(**kwargs)
         except KeyError as e:
             raise ValueError(f"缺少必需的参数: {e}")
-    
+
     @classmethod
     def get_denoising_prompt(cls, original_text: str) -> str:
         """获取AI去味提示词"""
@@ -949,7 +951,7 @@ class PromptService:
             cls.AI_DENOISING,
             original_text=original_text
         )
-    
+
     @classmethod
     def get_world_building_prompt(cls, title: str, theme: str, genre: str = "") -> str:
         """获取世界构建提示词"""
@@ -959,11 +961,11 @@ class PromptService:
             theme=theme,
             genre=genre or "通用类型"
         )
-    
+
     @classmethod
     def get_characters_batch_prompt(cls, count: int, time_period: str, location: str,
-                                   atmosphere: str, rules: str, theme: str,
-                                   genre: str = "", requirements: str = "") -> str:
+                                    atmosphere: str, rules: str, theme: str,
+                                    genre: str = "", requirements: str = "") -> str:
         """获取批量角色生成提示词"""
         return cls.format_prompt(
             cls.CHARACTERS_BATCH_GENERATION,
@@ -976,14 +978,14 @@ class PromptService:
             genre=genre or "通用类型",
             requirements=requirements or "无特殊要求"
         )
-    
+
     @classmethod
     def get_complete_outline_prompt(cls, title: str, theme: str, genre: str,
-                                   chapter_count: int, narrative_perspective: str,
-                                   target_words: int, time_period: str, location: str,
-                                   atmosphere: str, rules: str, characters_info: str,
-                                   requirements: str = "",
-                                   mcp_references: str = "") -> str:
+                                    chapter_count: int, narrative_perspective: str,
+                                    target_words: int, time_period: str, location: str,
+                                    atmosphere: str, rules: str, characters_info: str,
+                                    requirements: str = "",
+                                    mcp_references: str = "") -> str:
         """获取向导大纲生成提示词（支持MCP增强）"""
         # 格式化MCP参考资料
         mcp_text = ""
@@ -992,7 +994,7 @@ class PromptService:
             mcp_text += "以下是通过MCP工具搜索到的情节设计参考资料，可用于设计大纲结构和情节发展：\n\n"
             mcp_text += mcp_references
             mcp_text += "\n"
-        
+
         return cls.format_prompt(
             cls.COMPLETE_OUTLINE_GENERATION,
             title=title,
@@ -1009,14 +1011,16 @@ class PromptService:
             mcp_references=mcp_text,
             requirements=requirements or "无特殊要求"
         )
-    
+
     @classmethod
     def get_chapter_generation_prompt(cls, title: str, theme: str, genre: str,
                                       narrative_perspective: str, time_period: str,
                                       location: str, atmosphere: str, rules: str,
                                       characters_info: str, outlines_context: str,
+                                      outline_title: str, outline_number: int,
                                       chapter_number: int, chapter_title: str,
-                                      chapter_outline: str, style_content: str = "",
+                                      chapter_outline: str, chapter_summary: str,
+                                      style_content: str = "",
                                       target_word_count: int = 3000,
                                       memory_context: dict = None,
                                       mcp_references: str = "") -> str:
@@ -1031,7 +1035,7 @@ class PromptService:
         """
         # 计算最大字数（目标字数+1000）
         max_word_count = target_word_count + 1000
-        
+
         # 格式化记忆上下文
         memory_text = ""
         if memory_context:
@@ -1041,7 +1045,7 @@ class PromptService:
             memory_text += "\n" + memory_context.get('foreshadows', '')
             memory_text += "\n" + memory_context.get('character_states', '')
             memory_text += "\n" + memory_context.get('plot_points', '')
-        
+
         # 格式化MCP参考资料
         mcp_text = ""
         if mcp_references:
@@ -1049,7 +1053,7 @@ class PromptService:
             mcp_text += "以下是通过MCP工具搜索到的相关参考资料，可用于丰富情节和细节：\n\n"
             mcp_text += mcp_references
             mcp_text += "\n"
-        
+
         base_prompt = cls.format_prompt(
             cls.CHAPTER_GENERATION,
             title=title,
@@ -1062,39 +1066,45 @@ class PromptService:
             rules=rules,
             characters_info=characters_info,
             outlines_context=outlines_context,
+            outline_title=outline_title,
+            outline_number=outline_number,
             chapter_number=chapter_number,
             chapter_title=chapter_title,
             chapter_outline=chapter_outline,
+            chapter_summary=chapter_summary,
             target_word_count=target_word_count,
             max_word_count=max_word_count
         )
-        
+
         # 插入记忆上下文和MCP参考资料
         insert_text = ""
         if memory_text:
             insert_text += memory_text
         if mcp_text:
             insert_text += mcp_text
-        
+
         if insert_text:
             base_prompt = base_prompt.replace(
                 "本章信息：",
                 insert_text + "\n\n本章信息："
             )
-        
+
         # 如果有风格要求，应用到提示词中
         if style_content:
             return WritingStyleManager.apply_style_to_prompt(base_prompt, style_content)
-        
+
         return base_prompt
-    
+
     @classmethod
     def get_chapter_generation_with_context_prompt(cls, title: str, theme: str, genre: str,
                                                    narrative_perspective: str, time_period: str,
                                                    location: str, atmosphere: str, rules: str,
                                                    characters_info: str, outlines_context: str,
-                                                   previous_content: str, chapter_number: int,
+                                                   previous_content: str,
+                                                   outline_title: str,outline_number:int,
+                                                   chapter_number: int,
                                                    chapter_title: str, chapter_outline: str,
+                                                   chapter_summary: str,
                                                    style_content: str = "",
                                                    target_word_count: int = 3000,
                                                    memory_context: dict = None,
@@ -1110,7 +1120,7 @@ class PromptService:
         """
         # 计算最大字数（目标字数+1000）
         max_word_count = target_word_count + 1000
-        
+
         # 格式化记忆上下文
         memory_text = ""
         if memory_context:
@@ -1121,13 +1131,13 @@ class PromptService:
             memory_text += "\n" + memory_context.get('plot_points', '')
         else:
             memory_text = "暂无相关记忆"
-        
+
         # 格式化MCP参考资料
         if mcp_references:
             memory_text += "\n\n【📚 MCP工具搜索 - 参考资料】\n"
             memory_text += "以下是通过MCP工具搜索到的相关参考资料，可用于丰富情节和细节：\n\n"
             memory_text += mcp_references
-        
+
         base_prompt = cls.format_prompt(
             cls.CHAPTER_GENERATION_WITH_CONTEXT,
             title=title,
@@ -1141,23 +1151,26 @@ class PromptService:
             characters_info=characters_info,
             outlines_context=outlines_context,
             previous_content=previous_content,
+            outline_title=outline_title,
+            outline_number=outline_number,
             chapter_number=chapter_number,
             chapter_title=chapter_title,
             chapter_outline=chapter_outline,
+            chapter_summary=chapter_summary,
             target_word_count=target_word_count,
             max_word_count=max_word_count,
             memory_context=memory_text
         )
-        
+
         # 如果有风格要求，应用到提示词中
         if style_content:
             return WritingStyleManager.apply_style_to_prompt(base_prompt, style_content)
-        
+
         return base_prompt
-    
+
     @classmethod
     def get_outline_prompt(cls, genre: str, theme: str, target_words: int,
-                          requirements: str = "") -> str:
+                           requirements: str = "") -> str:
         """获取大纲生成提示词"""
         return cls.format_prompt(
             cls.OUTLINE_GENERATION,
@@ -1166,7 +1179,7 @@ class PromptService:
             target_words=target_words,
             requirements=requirements or "无特殊要求"
         )
-    
+
     @classmethod
     def get_outline_continue_prompt(cls, title: str, theme: str, genre: str,
                                     narrative_perspective: str, chapter_count: int,
@@ -1180,7 +1193,7 @@ class PromptService:
                                     mcp_references: str = "") -> str:
         """获取大纲续写提示词（支持记忆+MCP增强）"""
         end_chapter = start_chapter + chapter_count - 1
-        
+
         # 格式化记忆上下文
         memory_text = ""
         if memory_context:
@@ -1191,7 +1204,7 @@ class PromptService:
             memory_text += "\n" + memory_context.get('plot_points', '')
         else:
             memory_text = "暂无相关记忆（可能是首次续写或记忆库为空）"
-        
+
         # 格式化MCP参考资料
         mcp_text = ""
         if mcp_references:
@@ -1199,7 +1212,7 @@ class PromptService:
             mcp_text += "以下是通过MCP工具搜索到的续写参考资料，可用于丰富情节发展和冲突设计：\n\n"
             mcp_text += mcp_references
             mcp_text += "\n"
-        
+
         return cls.format_prompt(
             cls.OUTLINE_CONTINUE_GENERATION,
             title=title,
@@ -1223,7 +1236,7 @@ class PromptService:
             memory_context=memory_text,
             mcp_references=mcp_text
         )
-    
+
     @classmethod
     def get_single_character_prompt(cls, project_context: str, user_input: str) -> str:
         """获取单个角色生成提示词"""
@@ -1232,7 +1245,7 @@ class PromptService:
             project_context=project_context,
             user_input=user_input
         )
-    
+
     @classmethod
     def get_single_organization_prompt(cls, project_context: str, user_input: str) -> str:
         """获取单个组织生成提示词"""
@@ -1241,16 +1254,16 @@ class PromptService:
             project_context=project_context,
             user_input=user_input
         )
-    
+
     @classmethod
     def get_outline_expansion_prompt(cls, title: str, genre: str, theme: str,
-                                    narrative_perspective: str, time_period: str,
-                                    location: str, atmosphere: str, rules: str,
-                                    characters_info: str, outline_order: int,
-                                    outline_title: str, outline_content: str,
-                                    context_info: str, strategy: str = "balanced",
-                                    target_chapters: int = 3,
-                                    include_scenes: bool = False) -> str:
+                                     narrative_perspective: str, time_period: str,
+                                     location: str, atmosphere: str, rules: str,
+                                     characters_info: str, outline_order: int,
+                                     outline_title: str, outline_content: str,
+                                     context_info: str, strategy: str = "balanced",
+                                     target_chapters: int = 3,
+                                     include_scenes: bool = False) -> str:
         """
         获取大纲展开为多章节的提示词
         
@@ -1279,14 +1292,14 @@ class PromptService:
             "detail": "采用细节丰富策略：深挖大纲中的每个细节，为每个关键事件、情感转折都安排足够的叙事空间。"
         }
         strategy_instruction = strategy_instructions.get(strategy, strategy_instructions["balanced"])
-        
+
         # 场景相关的指令和字段
         scene_instruction = ""
         scene_field = ""
         if include_scenes:
             scene_instruction = "\n   - scenes: 场景列表（2-4个具体场景描述）"
             scene_field = ',\n    "scenes": ["场景1", "场景2"]'
-        
+
         return cls.format_prompt(
             cls.OUTLINE_EXPANSION,
             title=title,

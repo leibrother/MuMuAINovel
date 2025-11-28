@@ -434,6 +434,12 @@ async def build_smart_chapter_context(
     }
     
     try:
+        current_chapter_result = await db.execute(
+            select(Chapter)
+            .where(Chapter.project_id == project_id)
+            .where(Chapter.chapter_number == current_chapter_number)
+        )
+        current_chapter = current_chapter_result.scalar_one_or_none()
         # 1. 获取所有已完成的前置章节（只取ID和序号）
         all_chapters_result = await db.execute(
             select(Chapter.id, Chapter.chapter_number, Chapter.title)
@@ -488,7 +494,7 @@ async def build_smart_chapter_context(
         current_outline_result = await db.execute(
             select(Outline.content)
             .where(Outline.project_id == project_id)
-            .where(Outline.order_index == current_chapter_number)
+            .where(Outline.id == current_chapter.outline_id)
         )
         current_outline = current_outline_result.scalar_one_or_none()
         
@@ -1012,7 +1018,7 @@ async def generate_chapter_content_stream(
                 outline_result = await db_session.execute(
                     select(Outline)
                     .where(Outline.project_id == current_chapter.project_id)
-                    .where(Outline.order_index == current_chapter.chapter_number)
+                    .where(Outline.id == current_chapter.outline_id)
                     .execution_options(populate_existing=True)
                 )
                 outline = outline_result.scalar_one_or_none()
@@ -1026,7 +1032,7 @@ async def generate_chapter_content_stream(
                 )
                 all_outlines = all_outlines_result.scalars().all()
                 outlines_context = "\n".join([
-                    f"第{o.order_index}章 {o.title}: {o.content[:100]}..."
+                    f"第{o.order_index}卷 {o.title}: {o.content[:100]}..."
                     for o in all_outlines
                 ])
                 
@@ -1202,9 +1208,12 @@ async def generate_chapter_content_stream(
                         characters_info=characters_info or '暂无角色信息',
                         outlines_context=outlines_context,
                         previous_content=previous_content,
+                        outline_title=outline.title,
+                        outline_number=outline.order_index,
                         chapter_number=current_chapter.chapter_number,
                         chapter_title=current_chapter.title,
                         chapter_outline=outline.content if outline else current_chapter.summary or '暂无大纲',
+                        chapter_summary=current_chapter.summary,
                         style_content=style_content,
                         target_word_count=target_word_count,
                         memory_context=memory_context,
@@ -1222,9 +1231,12 @@ async def generate_chapter_content_stream(
                         rules=project.world_rules or '未设定',
                         characters_info=characters_info or '暂无角色信息',
                         outlines_context=outlines_context,
+                        outline_title=outline.title,
+                        outline_number=outline.order_index,
                         chapter_number=current_chapter.chapter_number,
                         chapter_title=current_chapter.title,
                         chapter_outline=outline.content if outline else current_chapter.summary or '暂无大纲',
+                        chapter_summary=current_chapter.summary,
                         style_content=style_content,
                         target_word_count=target_word_count,
                         memory_context=memory_context,
@@ -2220,7 +2232,7 @@ async def generate_single_chapter_for_batch(
     outline_result = await db_session.execute(
         select(Outline)
         .where(Outline.project_id == chapter.project_id)
-        .where(Outline.order_index == chapter.chapter_number)
+        .where(Outline.id == chapter.outline_id)
     )
     outline = outline_result.scalar_one_or_none()
     
@@ -2232,7 +2244,7 @@ async def generate_single_chapter_for_batch(
     )
     all_outlines = all_outlines_result.scalars().all()
     outlines_context = "\n".join([
-        f"第{o.order_index}章 {o.title}: {o.content[:100]}..."
+        f"第{o.order_index}卷 {o.title}: {o.content[:100]}..."
         for o in all_outlines
     ])
     
@@ -2299,9 +2311,12 @@ async def generate_single_chapter_for_batch(
             characters_info=characters_info or '暂无角色信息',
             outlines_context=outlines_context,
             previous_content=previous_content,
+            outline_title=outline.title,
+            outline_number=outline.order_index,
             chapter_number=chapter.chapter_number,
             chapter_title=chapter.title,
             chapter_outline=outline.content if outline else chapter.summary or '暂无大纲',
+            chapter_summary=chapter.summary,
             style_content=style_content,
             target_word_count=target_word_count,
             memory_context=memory_context
@@ -2318,9 +2333,12 @@ async def generate_single_chapter_for_batch(
             rules=project.world_rules or '未设定',
             characters_info=characters_info or '暂无角色信息',
             outlines_context=outlines_context,
+            outline_title=outline.title,
+            outline_number=outline.order_index,
             chapter_number=chapter.chapter_number,
             chapter_title=chapter.title,
             chapter_outline=outline.content if outline else chapter.summary or '暂无大纲',
+            chapter_summary=chapter.summary,
             style_content=style_content,
             target_word_count=target_word_count,
             memory_context=memory_context
@@ -2434,7 +2452,7 @@ async def regenerate_chapter_stream(
             outline_result = await temp_db.execute(
                 select(Outline)
                 .where(Outline.project_id == chapter.project_id)
-                .where(Outline.order_index == chapter.chapter_number)
+                .where(Outline.id == chapter.outline_id)
             )
             outline = outline_result.scalar_one_or_none()
             
@@ -2452,6 +2470,7 @@ async def regenerate_chapter_stream(
                     for c in characters
                 ]) if characters else '暂无角色信息',
                 'chapter_outline': outline.content if outline else chapter.summary or '暂无大纲',
+                'chapter_summary': chapter.summary,
                 'previous_context': ''  # 可以后续扩展添加前置章节上下文
             }
         finally:

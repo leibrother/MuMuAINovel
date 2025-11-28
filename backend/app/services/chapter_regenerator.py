@@ -221,10 +221,10 @@ class ChapterRegenerator:
 """)
         
         # 章节大纲
-        if project_context.get('chapter_outline'):
+        if project_context.get('chapter_summary'):
             prompt_parts.append(f"""## 📝 本章大纲
 
-{project_context['chapter_outline']}
+{project_context['chapter_summary']}
 
 ---
 """)
